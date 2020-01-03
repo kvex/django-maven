@@ -8,7 +8,7 @@ def read(filename):
 
 setup(
     name='django-maven',
-    version='0.2',
+    version='0.4',
     license='ISC',
     description='Capture exceptions in django management commands '
                 'into Sentry by Raven',

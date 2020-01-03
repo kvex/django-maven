@@ -3,8 +3,11 @@ from optparse import OptionParser
 
 from django.conf import settings
 from django.core.management import get_commands, load_command_class
-from django.core.management.base import (BaseCommand, handle_default_options,
-                                         CommandError)
+from django.core.management.base import (
+    BaseCommand,
+    CommandError,
+    handle_default_options
+)
 
 from raven import Client
 
@@ -35,27 +38,31 @@ class Command(BaseCommand):
             return usage
 
     def create_parser(self, prog_name, subcommand, subcommand_class):
-        if hasattr(self, 'use_argparse') and self.use_argparse:
-            return super(Command, self).create_parser(prog_name, subcommand)
+        if hasattr(self, 'use_argparse') and not self.use_argparse:
+            return OptionParser(
+                prog=prog_name,
+                usage=subcommand_class.usage(subcommand),
+                version=subcommand_class.get_version(),
+                option_list=subcommand_class.option_list
+            )
         else:
-            return OptionParser(prog=prog_name,
-                                usage=subcommand_class.usage(subcommand),
-                                version=subcommand_class.get_version(),
-                                option_list=subcommand_class.option_list)
+            return super(Command, self).create_parser(prog_name, subcommand)
 
     def run_from_argv(self, argv):
         if len(argv) <= 2 or argv[2] in ['-h', '--help']:
-            print self.usage(argv[1])
+            stdout = OutputWrapper(sys.stdout)
+            stdout.write(self.usage(argv[1]))
             sys.exit(1)
 
         subcommand_class = self._get_subcommand_class(argv[2])
         parser = self.create_parser(argv[0], argv[2], subcommand_class)
-        if hasattr(self, 'use_argparse') and self.use_argparse:
+        if hasattr(self, 'use_argparse') and not self.use_argparse:
+            options, args = parser.parse_args(argv[3:])
+        else:
             options = parser.parse_args(argv[3:])
             cmd_options = vars(options)
             args = cmd_options.pop('args', ())
-        else:
-            options, args = parser.parse_args(argv[3:])
+
         handle_default_options(options)
         try:
             subcommand_class.execute(*args, **options.__dict__)
