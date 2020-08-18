@@ -46,7 +46,7 @@ class Command(BaseCommand):
                 option_list=subcommand_class.option_list
             )
         else:
-            return super(Command, self).create_parser(prog_name, subcommand)
+            return subcommand_class.create_parser(prog_name, subcommand)
 
     def run_from_argv(self, argv):
         if len(argv) <= 2 or argv[2] in ['-h', '--help']:
